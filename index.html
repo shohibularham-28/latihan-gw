@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Latihan Guessing Words</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6fb;--card:#fff;--ink:#14213d;--mut:#64708a;--pri:#2b59c3;--ok:#1f9d55;--no:#d64545;--line:#dbe1ee}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1524;--card:#1a2238;--ink:#eef2fb;--mut:#9aa7c4;--pri:#6b93ff;--ok:#3ccf82;--no:#ff7a7a;--line:#2c3656}}
+:root[data-theme="dark"]{--bg:#0f1524;--card:#1a2238;--ink:#eef2fb;--mut:#9aa7c4;--pri:#6b93ff;--ok:#3ccf82;--no:#ff7a7a;--line:#2c3656}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+main{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:8px 0 4px}p.sub{color:var(--mut);margin:0 0 18px;line-height:1.45}
+.stage{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;color:var(--ink);font:inherit;cursor:pointer}
+.stage b{font-size:1.15rem}.stage span{display:block;color:var(--mut);font-size:.9rem;margin:2px 0 10px}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok);width:0}
+.small{font-size:.8rem;color:var(--mut);margin-top:6px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back{background:none;border:0;color:var(--pri);font:inherit;font-size:1rem;cursor:pointer;padding:6px 0}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs button{flex:1;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.word{background:var(--card);border:1px solid var(--line);border-radius:20px;min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;cursor:pointer;user-select:none}
+.word .w{font-weight:800;font-size:clamp(1.9rem,10vw,3.2rem);letter-spacing:.02em;line-height:1.1;overflow-wrap:normal}
+.word .m{margin-top:14px;color:var(--pri);font-size:1.15rem;font-weight:600;min-height:1.5em}
+.word .h{margin-top:14px;color:var(--mut);font-size:.85rem}
+.row{display:flex;gap:10px;margin-top:14px}
+.btn{flex:1;padding:14px;border-radius:14px;border:0;font:inherit;font-weight:700;font-size:1rem;color:#fff;cursor:pointer}
+.ok{background:var(--ok)}.no{background:var(--no)}.pri{background:var(--pri)}.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.timer{font-size:2rem;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.meta{display:flex;justify-content:space-between;color:var(--mut);margin-bottom:10px;font-size:.95rem}
+.res{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center}
+.res .big{font-size:2.6rem;font-weight:800;color:var(--pri)}
+.miss{text-align:left;margin-top:14px;font-size:.95rem;line-height:1.7}.miss b{display:block;margin-bottom:4px}
+.miss span{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin:2px 4px 2px 0}
+[hidden]{display:none!important}
+</style></head><body><main>
+
+<section id="home">
+<h1>Latihan Guessing Words</h1>
+<p class="sub">Pilih stage, lalu belajar lewat kartu atau main simulasi 3 menit bersama temanmu.</p>
+<div id="stages"></div>
+</section>
+
+<section id="stageView" hidden>
+<div class="top"><button class="back" id="back">← Kembali</button><b id="stTitle"></b></div>
+<div class="tabs"><button id="tStudy" class="on">Kartu Belajar</button><button id="tPlay">Main 3 Menit</button></div>
+
+<div id="study">
+<div class="meta"><span id="sCount"></span><span id="sKnown"></span></div>
+<div class="word" id="sCard"><div class="w" id="sW"></div><div class="m" id="sM"></div><div class="h" id="sH">Ketuk kartu untuk melihat arti</div></div>
+<div class="row"><button class="btn no" id="sNo">Belum hafal</button><button class="btn ok" id="sYes">Sudah tahu</button></div>
+</div>
+
+<div id="play" hidden>
+<div id="pIntro" class="res"><p style="margin-top:0;line-height:1.5">Satu orang memegang HP sebagai <b>Pemeraga</b> (melihat kata), satunya lagi <b>Penebak</b> yang bertanya Yes/No. Ada 10 kata dalam 3 menit.</p><button class="btn pri" id="pStart" style="width:100%">Mulai</button></div>
+<div id="pGame" hidden>
+<div class="timer" id="pTime">3:00</div>
+<div class="meta"><span id="pNum"></span><span id="pScore"></span></div>
+<div class="word" style="cursor:default"><div class="w" id="pW"></div></div>
+<div class="row"><button class="btn ghost" id="pPass">Pass</button><button class="btn ok" id="pOk">Benar ✓</button></div>
+</div>
+<div id="pRes" class="res" hidden>
+<div>Skor kamu</div><div class="big" id="rScore"></div><div class="small" id="rInfo"></div>
+<div class="miss" id="rMiss" hidden><b>Kata yang belum tertebak, pelajari lagi:</b><div id="rList"></div></div>
+<div class="row"><button class="btn pri" id="pAgain">Main lagi</button></div>
+</div>
+</div>
+</section>
+
+<script>
+const RAW={
+1:`Elephant|gajah
+Banana|pisang
+Umbrella|payung
+Teacher|guru
+Swimming|berenang
+Mountain|gunung
+Telephone|telepon
+Hospital|rumah sakit
+Rainbow|pelangi
+Bicycle|sepeda
+Giraffe|jerapah
+Pizza|pizza
+Scissors|gunting
+Doctor|dokter
+Sleeping|tidur
+Volcano|gunung berapi
+Television|televisi
+Library|perpustakaan
+Moon|bulan
+Airplane|pesawat
+Monkey|monyet
+Chocolate|cokelat
+Mirror|cermin
+Farmer|petani
+Dancing|menari
+River|sungai
+Computer|komputer
+Bakery|toko roti
+Snow|salju
+Train|kereta api
+Butterfly|kupu-kupu
+Watermelon|semangka
+Backpack|ransel
+Pilot|pilot
+Cooking|memasak
+Island|pulau
+Camera|kamera
+Market|pasar
+Cloud|awan
+Motorcycle|sepeda motor
+Dolphin|lumba-lumba
+Sandwich|roti lapis
+Toothbrush|sikat gigi
+Football|sepak bola
+Penguin|penguin
+Noodles|mi
+Guitar|gitar
+Garden|taman`,
+2:`Telescope|teleskop
+Traffic jam|kemacetan
+Astronaut|astronaut
+Birthday party|pesta ulang tahun
+Passport|paspor
+Roller coaster|wahana halilintar
+Tornado|angin puting beliung
+Social media|media sosial
+Magician|pesulap
+Piggy bank|celengan
+Thermometer|termometer
+Rush hour|jam sibuk
+Detective|detektif
+Shopping mall|pusat perbelanjaan
+Lighthouse|mercusuar
+Weather forecast|prakiraan cuaca
+Skeleton|kerangka
+Fast food|makanan cepat saji
+Pharmacy|apotek
+Video call|panggilan video
+Submarine|kapal selam
+Full moon|bulan purnama
+Earthquake|gempa bumi
+Tour guide|pemandu wisata
+Compass|kompas
+Fire alarm|alarm kebakaran
+Fireworks|kembang api
+Zebra crossing|zebra cross
+Escalator|eskalator
+Swimming pool|kolam renang
+Microscope|mikroskop
+Power outage|pemadaman listrik
+Sculpture|patung
+Sports car|mobil balap
+Pyramid|piramida
+Night market|pasar malam
+Parachute|parasut
+Alarm clock|jam weker
+Scarecrow|orang-orangan sawah
+Green tea|teh hijau
+Sunglasses|kacamata hitam
+Remote control|remote
+Refrigerator|kulkas
+School uniform|seragam sekolah
+Skyscraper|gedung pencakar langit
+Coffee shop|kedai kopi
+Hurricane|badai topan
+Garbage truck|truk sampah`,
+3:`Brush teeth|menyikat gigi
+Wake up|bangun tidur
+Play games|bermain game
+Feel hungry|merasa lapar
+Take selfie|berswafoto
+Give up|menyerah
+Eat noodles|makan mi
+Fall asleep|tertidur
+Good luck|semoga berhasil
+Be quiet|tenang, diam
+Wash hands|mencuci tangan
+Sit down|duduk
+Ride bicycle|naik sepeda
+Feel sleepy|merasa mengantuk
+Sing karaoke|bernyanyi karaoke
+Look out|awas
+Watch movie|menonton film
+Get wet|menjadi basah
+Happy birthday|selamat ulang tahun
+Feel nervous|merasa gugup
+Take shower|mandi
+Hurry up|cepatlah
+Go shopping|berbelanja
+Catch cold|masuk angin
+Read book|membaca buku
+Turn off|mematikan
+Cook dinner|memasak makan malam
+Say sorry|minta maaf
+Feel sad|merasa sedih
+Sweet dreams|mimpi indah
+Drink water|minum air
+Stand up|berdiri
+Feel tired|merasa lelah
+Good night|selamat malam
+Take nap|tidur sebentar
+Play guitar|bermain gitar
+Come in|masuk
+Feel cold|merasa dingin
+Say hello|menyapa
+Go home|pulang`};
+const INFO={1:["Stage 1","Kata tunggal, tingkat mudah"],2:["Stage 2","Kata dan frasa pendek, tingkat menengah"],3:["Stage 3","Frasa 2 kata, tingkat sulit"]};
+const W={};for(const k in RAW)W[k]=RAW[k].split("\n").map(l=>{const [a,b]=l.split("|");return{w:a.toUpperCase(),m:b}});
+const $=id=>document.getElementById(id);
+let known={1:[],2:[],3:[]};
+try{const s=localStorage.getItem("gw-known");if(s)known=Object.assign(known,JSON.parse(s))}catch(e){}
+function save(){try{localStorage.setItem("gw-known",JSON.stringify(known))}catch(e){}}
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+function home(){
+  $("home").hidden=false;$("stageView").hidden=true;
+  $("stages").innerHTML="";
+  [1,2,3].forEach(n=>{
+    const pct=Math.round(known[n].length/W[n].length*100);
+    const b=document.createElement("button");b.className="stage";
+    b.innerHTML=`<b>${INFO[n][0]}</b><span>${INFO[n][1]}</span><div class="bar"><i style="width:${pct}%"></i></div><div class="small">${known[n].length} dari ${W[n].length} kata sudah kamu kuasai</div>`;
+    b.onclick=()=>openStage(n);$("stages").appendChild(b);
+  });
+}
+let st=1,deck=[],di=0,shown=false;
+function openStage(n){st=n;$("home").hidden=true;$("stageView").hidden=false;$("stTitle").textContent=INFO[n][0];tab("study");newDeck()}
+function tab(t){const s=t==="study";$("study").hidden=!s;$("play").hidden=s;$("tStudy").className=s?"on":"";$("tPlay").className=s?"":"on";
+  if(!s){clearInterval(tm);$("pIntro").hidden=false;$("pGame").hidden=true;$("pRes").hidden=true}}
+function newDeck(){
+  const rest=W[st].filter(x=>!known[st].includes(x.w));
+  deck=shuf(rest.length?rest:W[st]);di=0;showCard();
+}
+function showCard(){
+  shown=false;const c=deck[di];
+  $("sW").textContent=c.w;$("sM").textContent="";$("sH").hidden=false;
+  $("sCount").textContent=`Kartu ${di+1} dari ${deck.length}`;
+  $("sKnown").textContent=`Dikuasai: ${known[st].length}/${W[st].length}`;
+}
+$("sCard").onclick=()=>{const c=deck[di];shown=!shown;$("sM").textContent=shown?c.m:"";$("sH").hidden=shown};
+function nextCard(){di++;if(di>=deck.length){newDeck()}else showCard()}
+$("sYes").onclick=()=>{const w=deck[di].w;if(!known[st].includes(w)){known[st].push(w);save()}nextCard()};
+$("sNo").onclick=()=>{const w=deck[di].w;known[st]=known[st].filter(x=>x!==w);save();nextCard()};
+$("back").onclick=()=>{clearInterval(tm);home()};
+$("tStudy").onclick=()=>{tab("study");newDeck()};$("tPlay").onclick=()=>tab("play");
+
+let tm,pd=[],pi=0,pscore=0,left=180,got=[];
+function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function startGame(){
+  pd=shuf(W[st]).slice(0,10);pi=0;pscore=0;left=180;got=[];
+  $("pIntro").hidden=true;$("pRes").hidden=true;$("pGame").hidden=false;
+  showP();$("pTime").textContent=fmt(left);
+  clearInterval(tm);tm=setInterval(()=>{left--;$("pTime").textContent=fmt(Math.max(left,0));if(left<=0)endGame()},1000);
+}
+function showP(){$("pW").textContent=pd[pi].w;$("pNum").textContent=`Kata ${pi+1} dari 10`;$("pScore").textContent=`Skor: ${pscore}`}
+function advance(){pi++;if(pi>=pd.length)endGame();else showP()}
+$("pOk").onclick=()=>{pscore+=10;got.push(pd[pi].w);advance()};
+$("pPass").onclick=advance;
+function endGame(){
+  clearInterval(tm);
+  const all=got.length===pd.length;const bonus=all?Math.max(left,0)*0.1:0;
+  $("pGame").hidden=true;$("pRes").hidden=false;
+  $("rScore").textContent=(pscore+bonus).toFixed(bonus%1?1:0).replace(".",",");
+  $("rInfo").textContent=`${got.length} dari 10 kata tertebak`+(all?`, bonus waktu ${bonus.toFixed(1).replace(".",",")} poin`:"");
+  const miss=pd.filter(x=>!got.includes(x.w));
+  $("rMiss").hidden=!miss.length;
+  $("rList").innerHTML=miss.map(x=>`<span>${x.w} = ${x.m}</span>`).join("");
+}
+$("pStart").onclick=startGame;$("pAgain").onclick=startGame;
+home();
+</script></main></body></html>
